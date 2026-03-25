@@ -3,10 +3,12 @@ import { Component, OnInit } from '@angular/core';
 import { UserService } from '../shared/services/user.service';
 import { CrudService } from '../shared/services/crud.service';
 import { Country } from '../shared/models/country';
-import { forkJoin } from 'rxjs';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { StorageService } from '../shared/services/storage.service';
 import { TranslateService } from '@ngx-translate/core';
 import { environment } from '../../../environments/environment';
+import { OrdersService } from '../orders/services/orders.service';
 
 
 @Component({
@@ -33,22 +35,31 @@ export class HomeComponent implements OnInit {
   userId;
   _countryArray: Country[];
 
+  // stats
+  selectedPeriod = '7d';
+  stats: any = null;
+  revenueChartData: any = null;
+  revenueChartOptions = {
+    responsive: true,
+    scales: { xAxes: [{}], yAxes: [{ ticks: { beginAtZero: true } }] }
+  };
+
   constructor(
     private userService: UserService,
     private crudService: CrudService,
     private storageService: StorageService,
     private translate: TranslateService,
+    private ordersService: OrdersService,
   ) {
     this.userService.getUserProfile()
       .subscribe(user => {
-        //console.log(this.userService.roles);
         this.userService.checkForAccess(user.groups);
         this.canAccessToOrder = this.userService.roles.canAccessToOrder;
       });
   }
 
   ngOnInit() {
-    let lang = this.storageService.getLanguage()
+    const lang = this.storageService.getLanguage();
     this.loading = true;
     const store = localStorage.getItem('merchant');
     forkJoin([this.crudService.listCountriesByLanguage(lang), this.userService.getUserProfile(), this.userService.getMerchant(store)])
@@ -68,20 +79,41 @@ export class HomeComponent implements OnInit {
         localStorage.setItem('merchantLanguage', this.user.defaultLanguage);
         localStorage.setItem('merchantName', merchant.name);
         localStorage.setItem('supportedLanguages', JSON.stringify(merchant.supportedLanguages));
-
-        //require merchant country
         localStorage.setItem('defaultCountry', merchant.address.country);
 
         this.loading = false;
       });
+
+    this.loadStats();
+  }
+
+  loadStats() {
+    this.ordersService.getOrderStats(this.selectedPeriod).subscribe(data => {
+      this.stats = data;
+      this.revenueChartData = {
+        labels: data.revenueByDay.map((d: any) => d.date),
+        datasets: [{
+          label: 'Revenue',
+          data: data.revenueByDay.map((d: any) => d.amount),
+          borderColor: '#3366ff',
+          backgroundColor: 'rgba(51,102,255,0.1)',
+          fill: true
+        }]
+      };
+    });
+  }
+
+  onPeriodChange(period: string) {
+    this.selectedPeriod = period;
+    this.loadStats();
   }
 
   setLanguage() {
-    if(this.user.defaultLanguage != null) {
+    if (this.user.defaultLanguage != null) {
       localStorage.setItem('lang', this.user.defaultLanguage);
       this.translate.setDefaultLang(localStorage.getItem('lang'));
       this.translate.use(localStorage.getItem('lang'));
-    } else { //default system language
+    } else {
       localStorage.setItem('lang', environment.client.language.default);
     }
   }
@@ -91,11 +123,6 @@ export class HomeComponent implements OnInit {
   }
 
   deleteCache() {
-    //start loading
     this.loading = true;
-    //invoke backend
-    //return status
-    //stop loading
   }
-
 }

@@ -1,65 +1,84 @@
-<div [nbSpinner]="loadingList" nbSpinnerSize="large" nbSpinnerStatus="primary">
-<div class="inner_pages home_page">
-  <nb-card-header class="main_header">
-      <h1 class="page_title"> {{ "HOME.STORE_INFORMATION" | translate }}</h1>
-      <div class="main_spacer">
-          &nbsp;
-      </div>
-  </nb-card-header>
-</div>
+<div [nbSpinner]="loading" nbSpinnerSize="large" nbSpinnerStatus="primary">
 
-<div class="row">
-    <div class="col-lg-8 col-md-8 col-sm-12 col-xs-12">
-        <nb-card class="nb-card inline-form-card">
-          <nb-card-header class="nb-card-header">{{"COMPONENTS.STORE_DETAILS" | translate}}</nb-card-header>
-          <nb-card-body class="nb-card-body">
-              <div class="info-block">
-                  <span><strong>{{user?.merchantName}}</strong></span>
-                  <span>{{user?.address}}</span>
-                  <span>{{user?.city}}, {{user?.stateProvince}}, {{user?.postalCode}}</span>
-                  <span>{{user?.country}}</span>
-                  <span>{{user?.phone}}</span>
-                </div>
-                <div class="info-block">
-                    <span>
-                      <i class="fa fa-user"></i>
-                      {{user?.userName}}
-                    </span>
-                    <span>
-                      <i class="fa fa-calendar-alt"></i>
-                      {{ "HOME.LAST_ACCESS" | translate }}: {{user?.lastAccess | date : 'medium'}}
-                    </span>
-                </div>
-          </nb-card-body>
-        </nb-card>
+  <!-- Store info -->
+  <div class="row">
+    <div class="col-lg-8 col-md-8 col-sm-12">
+      <nb-card>
+        <nb-card-header>{{ "COMPONENTS.STORE_DETAILS" | translate }}</nb-card-header>
+        <nb-card-body>
+          <div class="info-block">
+            <span><strong>{{ user?.merchantName }}</strong></span>
+            <span>{{ user?.address }}</span>
+            <span>{{ user?.city }}, {{ user?.stateProvince }}, {{ user?.postalCode }}</span>
+            <span>{{ user?.country }}</span>
+            <span>{{ user?.phone }}</span>
+          </div>
+          <div class="info-block">
+            <span><i class="fa fa-user"></i> {{ user?.userName }}</span>
+            <span><i class="fa fa-calendar-alt"></i> {{ "HOME.LAST_ACCESS" | translate }}: {{ user?.lastAccess | date:'medium' }}</span>
+          </div>
+        </nb-card-body>
+      </nb-card>
     </div>
-    
-    <div class="col-lg-4 col-md-4 col-sm-12 col-xs-12 box-overlay">
-        <div [nbSpinner]="loading" nbSpinnerSize="large" nbSpinnerStatus="primary">
-        <nb-card class="nb-card inline-form-card">
-          <nb-card-header class="nb-card-header">System management</nb-card-header>
-          <nb-card-body class="nb-card-body">
-              <div>
-                  <button type="button" disabled nbButton status="primary" (click)="deleteCache()">{{'SYSTEM.DELETE_CACHE' | translate }}</button>
-              </div>
-          </nb-card-body>
-        </nb-card>
+  </div>
+
+  <!-- Period toggle -->
+  <div class="row mt-3" *ngIf="canAccessToOrder">
+    <div class="col-12">
+      <div>
+        <button nbButton [status]="selectedPeriod === '7d' ? 'primary' : 'basic'" (click)="onPeriodChange('7d')">7 Days</button>
+        <button nbButton [status]="selectedPeriod === '30d' ? 'primary' : 'basic'" (click)="onPeriodChange('30d')">30 Days</button>
+        <button nbButton [status]="selectedPeriod === '90d' ? 'primary' : 'basic'" (click)="onPeriodChange('90d')">90 Days</button>
       </div>
     </div>
-    
-</div>
+  </div>
 
-
-<!--
-<div class="row">
-    <div class="col-xxl-12" >
-      <span id="draft">
-        <p id="bg-text">Draft</p>
-        <ngx-ecommerce-charts></ngx-ecommerce-charts>
-      </span>
+  <!-- Stat cards -->
+  <div class="row mt-3" *ngIf="stats && canAccessToOrder">
+    <div class="col-lg-3 col-md-6 col-sm-12">
+      <nb-card status="primary">
+        <nb-card-body class="text-center">
+          <h2>{{ stats.totalOrders }}</h2>
+          <p>Total Orders</p>
+        </nb-card-body>
+      </nb-card>
     </div>
-</div>
--->
+    <div class="col-lg-3 col-md-6 col-sm-12">
+      <nb-card status="success">
+        <nb-card-body class="text-center">
+          <h2>{{ stats.totalRevenue | currency }}</h2>
+          <p>Total Revenue</p>
+        </nb-card-body>
+      </nb-card>
+    </div>
+    <div class="col-lg-3 col-md-6 col-sm-12">
+      <nb-card status="warning">
+        <nb-card-body class="text-center">
+          <h2>{{ stats.pendingOrders }}</h2>
+          <p>Pending Orders</p>
+        </nb-card-body>
+      </nb-card>
+    </div>
+    <div class="col-lg-3 col-md-6 col-sm-12">
+      <nb-card status="info">
+        <nb-card-body class="text-center">
+          <h2>{{ stats.completedOrders }}</h2>
+          <p>Completed Orders</p>
+        </nb-card-body>
+      </nb-card>
+    </div>
+  </div>
+
+  <!-- Revenue chart -->
+  <div class="row mt-3" *ngIf="revenueChartData && canAccessToOrder">
+    <div class="col-12">
+      <nb-card>
+        <nb-card-header>Revenue Over Time</nb-card-header>
+        <nb-card-body>
+          <chart type="line" [data]="revenueChartData" [options]="revenueChartOptions"></chart>
+        </nb-card-body>
+      </nb-card>
+    </div>
+  </div>
 
 </div>
-
